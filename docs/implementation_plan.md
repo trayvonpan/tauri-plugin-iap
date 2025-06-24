@@ -144,16 +144,19 @@ graph LR
 
 1.  **Understand Requirements:**
 
-    - 1.1: Thoroughly review the `tauri_plugin_iap_design.md` to internalize the project's goals, guiding principles, and architecture.
-    - 1.2: Identify all necessary dependencies for both the Rust core and platform-specific native code (Swift, Kotlin).
-    - 1.3: Define the exact API surface for the JavaScript/TypeScript API, including function signatures, data models, and event names.
+    - 1.1: The project provides a unified, asynchronous JavaScript/TypeScript API for IAP in Tauri apps, abstracting Apple StoreKit and Google Play Billing via a Rust core and native Swift/Kotlin modules. Architecture and principles are detailed in [`docs/tauri_plugin_iap_design.md`](docs/tauri_plugin_iap_design.md).
+    - 1.2: Rust core dependencies are managed in [`crates/tauri-plugin-iap/Cargo.toml`](crates/tauri-plugin-iap/Cargo.toml). Platform-specific native code uses Swift (via `swift-rs` for StoreKit on Apple platforms) and Kotlin (via JNI for Google Play Billing on Android), as described in the design doc.
+    - 1.3: The JavaScript/TypeScript API surface is defined in [`packages/tauri-plugin-iap/src/index.ts`](packages/tauri-plugin-iap/src/index.ts) and [`packages/tauri-plugin-iap/src/types.ts`](packages/tauri-plugin-iap/src/types.ts), including:
+      - Functions: `initialize`, `isAvailable`, `queryProductDetails`, `buyNonConsumable`, `buyConsumable`, `completePurchase`, `restorePurchases`, `countryCode`, `onPurchaseUpdate`.
+      - Data models: `ProductDetails`, `PurchaseDetails`, `PurchaseParam`, `PurchaseStatus`, `PurchaseVerificationData`, `IAPError`, `ProductDetailsResponse`.
+      - Event: `onPurchaseUpdate` (listens for purchase updates via Tauri events).
 
 2.  **Project Setup:**
 
-    - 2.1: Use the Tauri CLI to create a new Tauri plugin project.
-    - 2.2: Set up the Rust core crate within the plugin project.
-    - 2.3: Configure the `Cargo.toml` file to manage Rust dependencies and features for platform-specific compilation.
-    - 2.4: Create the `src-js` directory to house the JavaScript/TypeScript API.
+    - 2.1: The project was initialized using the Tauri CLI to scaffold a new plugin structure.
+    - 2.2: The Rust core crate is located at [`crates/tauri-plugin-iap`](crates/tauri-plugin-iap/), with its manifest in [`crates/tauri-plugin-iap/Cargo.toml`](crates/tauri-plugin-iap/Cargo.toml).
+    - 2.3: `Cargo.toml` manages Rust dependencies and platform-specific features. Native code integration (Swift/Kotlin) is handled via build scripts and platform modules as described in the design doc.
+    - 2.4: The JavaScript/TypeScript API is implemented in [`packages/tauri-plugin-iap/src`](packages/tauri-plugin-iap/src/), with configuration in [`packages/tauri-plugin-iap/package.json`](packages/tauri-plugin-iap/package.json) and [`packages/tauri-plugin-iap/tsconfig.json`](packages/tauri-plugin-iap/tsconfig.json).
 
 3.  **Core Module Implementation:**
 

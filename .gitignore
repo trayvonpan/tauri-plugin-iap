@@ -1,0 +1,49 @@
+# Rust
+/target/
+**/*.rs.bk
+.cargo/
+# Uncomment the next line if this is a library, not a binary crate
+# Cargo.lock
+
+# JavaScript / TypeScript
+/node_modules/
+dist/
+build/
+.nyc_output/
+coverage/
+.next/
+.out/
+.turbo/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Swift / Xcode
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcuserstate
+*.swiftpm/
+.build/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# OS / Temporary files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+.Spotlight-V100
+.Trashes
+*.tmp
+
+# Logs
+logs/

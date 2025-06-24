@@ -1,12 +1,11 @@
 # Rust
-/target/
+target/
 **/*.rs.bk
 .cargo/
-# Uncomment the next line if this is a library, not a binary crate
-# Cargo.lock
+Cargo.lock
 
 # JavaScript / TypeScript
-/node_modules/
+node_modules/
 dist/
 build/
 .nyc_output/
@@ -19,6 +18,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+package-lock.json
 
 # Swift / Xcode
 DerivedData/

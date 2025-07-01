@@ -7,7 +7,7 @@ A Tauri plugin to provide a single, unified JavaScript/TypeScript API for develo
 
 ## Project Goal
 
-The primary goal is to offer a consistent and simplified interface for integrating in-app purchases across different platforms supported by Tauri, specifically macOS/iOS and Android.
+The primary goal is to offer a consistent and simplified interface for integrating in-app purchases across different platforms supported by Tauri, specifically iOS and Android.
 
 ## Guiding Principles
 
@@ -27,7 +27,7 @@ graph TD
     A[Web Frontend / Developer Code] -->|Calls JS API| B(JS/TS API: tauri-plugin-iap);
     B -->|"Tauri invoke()"| C{Rust Core: tauri-plugin-iap};
     C -->|Delegates to| D{Platform Abstraction Layer};
-    D --> E["macOS/iOS (Rust+Swift)"];
+    D --> E["iOS (Rust+Swift)"];
     D --> F["Android (Rust+Kotlin)"];
     D --> G[Unsupported Platforms];
     E --> H[Apple StoreKit];
@@ -67,7 +67,7 @@ The plugin uses unified data models for consistency across platforms:
 
 ## Platform Support
 
-- **macOS/iOS:** Supported via Apple StoreKit, bridged using Rust and Swift (`swift-rs`).
+- **iOS:** Supported via Apple StoreKit, bridged using Rust and Swift (`swift-rs`).
 - **Android:** Supported via Google Play Billing Library, bridged using Rust and Kotlin (`jni`).
 - **Windows/Linux:** Currently unsupported. IAP-related calls on these platforms will return "PlatformNotSupported" errors.
 
@@ -77,7 +77,7 @@ The plugin uses unified data models for consistency across platforms:
 
 ## Development Roadmap (High-Level)
 
-1.  **Phase 1: macOS/iOS Support (MVP)**: Initial setup, Rust core and Swift bridge implementation, basic API, and example app.
+1.  **Phase 1: iOS Support (MVP)**: Initial setup, Rust core and Swift bridge implementation, basic API, and example app.
 2.  **Phase 2: Android Support**: Kotlin implementation, JNI bridge, integration into the core, and extended example app.
 3.  **Phase 3: Documentation & Polish**: Comprehensive documentation, refined error handling, robust logging, and thorough testing.
 

@@ -22,7 +22,7 @@ graph TD
     A[Web Frontend / Developer Code] -->|Imports and calls| B(JS/TS API: tauri-plugin-iap);
     B -->|"Tauri invoke()"| C{Rust Core: tauri-plugin-iap};
     C -->|Dispatches via Trait| D{Platform Abstraction Layer};
-    D --> E["macOS/iOS Module (Rust+Swift)"];
+    D --> E["iOS Module (Rust+Swift)"];
     D --> F["Android Module (Rust+Kotlin)"];
     D --> G[Unsupported Platform Module];
     E -->|FFI| H[Apple StoreKit];
@@ -55,9 +55,27 @@ graph TD
 
 ### **3. Core Module Division**
 
-The plugin will be structured into two main parts:
+The plugin follows the official Tauri plugin structure:
 
-**3.1. JavaScript/TypeScript API (`/src-js`)**
+```text
+tauri-plugin-iap/
+├── src/              - Rust implementation
+│   ├── commands.rs   - Command definitions for webview
+│   ├── desktop.rs    - Desktop implementation
+│   ├── error.rs      - Error types
+│   ├── lib.rs        - Plugin setup and implementation exports
+│   ├── mobile.rs     - Mobile implementation (iOS/Android)
+│   └── models.rs     - Shared data structures
+├── permissions/      - Command permission files
+├── android/         - Android library implementation
+├── ios/            - Swift package implementation
+├── guest-js/       - JavaScript API source code
+├── dist-js/        - Transpiled JavaScript assets
+├── Cargo.toml      - Rust crate configuration
+└── package.json    - NPM package configuration
+```
+
+**3.1. JavaScript/TypeScript API (`/guest-js`)**
 
 This package is distributed via npm and contains the developer-facing API.
 
@@ -172,18 +190,30 @@ pub trait Store: Send + Sync {
 }
 ```
 
-- **`src/platform/macos.rs`**: Rust bridge for macOS, using `swift-rs` to interact with Swift.
-- **`src/platform/android.rs`**: Rust bridge for Android, using `jni` to interact with Kotlin.
-- **`src/platform/desktop.rs`**: Placeholder implementation for unsupported platforms (Windows/Linux) that returns "PlatformNotSupported" errors.
-- **`build.rs`**: Critical for compiling native code (Swift, Kotlin) and linking necessary frameworks/libraries.
+**3.3. Native Platform Code**
+
+- **`ios/`**: Swift package for iOS implementation
+
+  - Wraps StoreKit APIs
+  - Handles product fetching, purchases, and transactions
+  - Communicates with Rust via FFI
+
+- **`android/`**: Android library implementation
+
+  - Contains Kotlin code for Google Play Billing
+  - Manages BillingClient lifecycle
+  - Communicates with Rust via JNI
+
+- **`src/desktop.rs`**: Desktop implementation
+  - Returns "PlatformNotSupported" for all IAP operations
 
 ### **4. Platform Adaptation**
 
-- **macOS/iOS (Apple StoreKit):**
+- **iOS (Apple StoreKit):**
 
   - **Technology:** Rust with `swift-rs` for Foreign Function Interface (FFI).
   - **Native Code:** A Swift class (e.g., `StoreKitManager.swift`) will be written to wrap `StoreKit` APIs. It will handle product fetching, purchase initiation, transaction observation, and receipt retrieval.
-  - **Rust Bridge:** `platform/macos.rs` will use `swift-rs` to generate safe Rust wrappers for Swift functions. It will implement the `Store` trait and emit `tauri-plugin-iap://purchase-update` events to the frontend upon successful transactions.
+  - **Rust Bridge:** `platform/ios.rs` will use `swift-rs` to generate safe Rust wrappers for Swift functions. It will implement the `Store` trait and emit `tauri-plugin-iap://purchase-update` events to the frontend upon successful transactions.
   - **Build:** `build.rs` will compile the Swift code and link against the `StoreKit.framework`.
 
 - **Android (Google Play Billing Library):**
@@ -209,7 +239,7 @@ pub trait Store: Send + Sync {
     - This JS function uses `await invoke(`${PLUGIN_NAME}::purchase`, { productId });` to send the command and its payload to the Tauri Rust backend.
 2.  **Rust Core to Native Platform:**
     - The `IapPlugin` in `plugin.rs` receives the `invoke` command.
-    - Based on the detected `target_os`, it delegates the call to the appropriate platform-specific `Store` implementation (e.g., `platform::macos::AppleStore` or `platform::android::GoogleStore`).
+    - Based on the detected `target_os`, it delegates the call to the appropriate platform-specific `Store` implementation (e.g., `platform::ios::AppleStore` or `platform::android::GoogleStore`).
     - The platform-specific Rust module then uses FFI (`swift-rs`) or JNI (`jni`) to call the native Swift/Kotlin code.
 3.  **Native Platform to Rust Core (Callbacks):**
     - The native Swift/Kotlin code performs the IAP operation (e.g., initiates a purchase, fetches product details).
@@ -238,29 +268,29 @@ This is a critical aspect and will be heavily emphasized in all documentation an
 
 ### **9. Development Roadmap**
 
-1.  **Phase 1: macOS/iOS Support (MVP)**
+1.  **Phase 1: iOS Support (MVP)**
 
-    - Set up the basic Tauri plugin project structure.
-    - Define Rust `models.rs` and the `Store` trait in `platform/mod.rs`.
-    - Implement the Swift `StoreKitManager` for product fetching and purchasing.
-    - Build the `swift-rs` bridge in `platform/macos.rs` and configure `build.rs`.
-    - Implement the `initialize`, `getProducts`, `purchase`, `restorePurchases`, and `onPurchaseUpdate` commands in `plugin.rs` for macOS/iOS.
-    - Develop the `src-js` API wrapper.
-    - Create a basic example Tauri app to test macOS/iOS IAP functionality.
-    - Publish `v0.1.0` with macOS/iOS support only.
+    - Set up the basic Tauri plugin project structure using the CLI.
+    - Implement core data structures in `src/models.rs`.
+    - Create the Swift package in `ios/` for StoreKit integration.
+    - Implement mobile bridge in `src/mobile.rs` for iOS.
+    - Define commands in `src/commands.rs`.
+    - Build the JavaScript API in `guest-js/`.
+    - Create a basic example Tauri app to test iOS IAP functionality.
+    - Publish `v0.1.0` with iOS support only.
 
 2.  **Phase 2: Android Support**
 
-    - Develop the Kotlin `BillingManager` for Google Play Billing.
-    - Implement the `jni` bridge in `platform/android.rs`, handling JNI calls and callbacks.
-    - Integrate Android implementation into the `Store` trait system in `plugin.rs`.
-    - Update `build.rs` and Cargo for Android compilation.
+    - Create Android library in `android/` for Google Play Billing.
+    - Implement Kotlin `BillingManager` and JNI bridge.
+    - Update `src/mobile.rs` with Android support.
+    - Configure Android build settings in `Cargo.toml`.
     - Extend the example Tauri app to test Android IAP functionality.
     - Publish `v0.2.0` with Android support.
 
 3.  **Phase 3: Documentation & Polish**
     - Write comprehensive documentation covering installation, API usage, error handling, and **especially** the server-side validation requirement.
-    - Create detailed example projects for both macOS/iOS and Android.
+    - Create detailed example projects for both iOS and Android.
     - Refine error messages and ensure consistent error handling across platforms.
     - Implement robust logging for debugging purposes.
     - Conduct thorough testing on both platforms.

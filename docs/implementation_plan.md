@@ -13,140 +13,60 @@ This document outlines the detailed plan for implementing the `tauri-plugin-iap`
   - **Clear Error Handling:** Distinct error types for failures.
   - **Non-Blocking:** All API calls are asynchronous.
 
-### 2. Overall Architecture
+### 2. Implementation Steps
 
-The plugin will consist of a JavaScript/TypeScript API package (`tauri-plugin-iap`) and a Rust Core crate (`tauri-plugin-iap`). Communication will flow from the JS API to the Rust Core via Tauri's `invoke` system, and back to the frontend via Tauri's event system.
+1. **Project Initialization**
 
-```mermaid
-graph LR
-    subgraph Overall Plan
-        A("Understand Requirements") --> B("Project Setup");
-        B --> C("Core Module Implementation");
-        C --> D("Platform Adaptation");
-        D --> E("Interface Design");
-        E --> F("Data Flow Implementation");
-        F --> G("Error Handling");
-        G --> H("Security Implementation");
-        H --> I("Testing and Documentation");
-        I --> J("Release and Maintenance");
-    end
+   - Create new plugin using Tauri CLI
+   - Set up project structure following official template
+   - Configure initial Cargo.toml and package.json
 
-    subgraph A. Understand Requirements
-        A1("Review Design Document");
-        A2("Identify Dependencies");
-        A3("Define API Surface");
-    end
+2. **Core Rust Implementation**
 
-    subgraph B. Project Setup
-        B1("Create Tauri Plugin Project");
-        B2("Set up Rust Core Crate");
-        B3("Configure Cargo.toml");
-        B4("Create src-js Directory");
-    end
+   - Implement data structures in src/models.rs
+   - Create error types in src/error.rs
+   - Define command interface in src/commands.rs
+   - Set up plugin in src/lib.rs
 
-    subgraph C. Core Module Implementation
-        C1("Implement models.rs");
-        C2("Implement platform/mod.rs (Store Trait)");
-        C3("Implement plugin.rs (IapPlugin)");
-        C4("Implement lib.rs (Register Commands)");
-    end
+3. **Platform Integration**
 
-    subgraph D. Platform Adaptation
-        D1("macOS/iOS (Swift-RS)");
-        D2("Android (JNI)");
-        D3("Desktop (Unsupported)");
-    end
+   - Create iOS Swift package with StoreKit implementation
+   - Develop Android library with Google Play Billing
+   - Implement platform bridges in src/mobile.rs
+   - Add desktop fallback in src/desktop.rs
 
-    subgraph E. Interface Design
-        E1("JavaScript/TypeScript API");
-        E2("Rust Store Trait");
-    end
+4. **JavaScript API Development**
 
-    subgraph F. Data Flow Implementation
-        F1("Frontend to Rust");
-        F2("Rust Core to Native Platform");
-        F3("Native Platform to Rust Core (Callbacks)");
-        F4("Rust Core to Frontend (Events)");
-    end
+   - Design TypeScript interface in guest-js/
+   - Implement API methods and types
+   - Set up build process to generate dist-js/
 
-    subgraph G. Error Handling
-        G1("Define Error Types");
-        G2("Implement Rust Error Propagation");
-        G3("Implement JS Promise Rejection");
-        G4("Implement Event-based Errors");
-    end
+5. **Commands and Permissions**
 
-    subgraph H. Security Implementation
-        H1("Document Server-Side Validation");
-        H2("Implement Receipt/Token Handling");
-    end
+   - Register plugin commands
+   - Configure command permissions
+   - Set up event system for purchase updates
+   - Implement error handling
 
-    subgraph I. Testing and Documentation
-        I1("Write Unit Tests");
-        I2("Write Integration Tests");
-        I3("Write Documentation");
-        I4("Create Example App");
-    end
+6. **Testing and Documentation**
 
-    subgraph J. Release and Maintenance
-        J1("Publish to crates.io and npm");
-        J2("Monitor Issues and PRs");
-        J3("Implement Feature Requests");
-        J4("Update Dependencies");
-    end
+   - Write unit and integration tests
+   - Create example applications
+   - Document API and usage
+   - Add server-side validation guide
 
-    A --> A1;
-    A --> A2;
-    A --> A3;
-
-    B --> B1;
-    B --> B2;
-    B --> B3;
-    B --> B4;
-
-    C --> C1;
-    C --> C2;
-    C --> C3;
-    C --> C4;
-
-    D --> D1;
-    D --> D2;
-    D --> D3;
-
-    E --> E1;
-    E --> E2;
-
-    F --> F1;
-    F --> F2;
-    F --> F3;
-    F --> F4;
-
-    G --> G1;
-    G --> G2;
-    G --> G3;
-    G --> G4;
-
-    H --> H1;
-    H --> H2;
-
-    I --> I1;
-    I --> I2;
-    I --> I3;
-    I --> I4;
-
-    J --> J1;
-    J --> J2;
-    J --> J3;
-    J --> J4;
-```
+7. **Release and Maintenance**
+   - Publish to crates.io and npm
+   - Set up version management
+   - Monitor and handle issues
 
 ### 3. Detailed Breakdown:
 
 1.  **Understand Requirements:**
 
     - 1.1: The project provides a unified, asynchronous JavaScript/TypeScript API for IAP in Tauri apps, abstracting Apple StoreKit and Google Play Billing via a Rust core and native Swift/Kotlin modules. Architecture and principles are detailed in [`docs/tauri_plugin_iap_design.md`](docs/tauri_plugin_iap_design.md).
-    - 1.2: Rust core dependencies are managed in [`crates/tauri-plugin-iap/Cargo.toml`](crates/tauri-plugin-iap/Cargo.toml). Platform-specific native code uses Swift (via `swift-rs` for StoreKit on Apple platforms) and Kotlin (via JNI for Google Play Billing on Android), as described in the design doc.
-    - 1.3: The JavaScript/TypeScript API surface is defined in [`packages/tauri-plugin-iap/src/index.ts`](packages/tauri-plugin-iap/src/index.ts) and [`packages/tauri-plugin-iap/src/types.ts`](packages/tauri-plugin-iap/src/types.ts), including:
+    - 1.2: Rust core dependencies are managed in [`Cargo.toml`](Cargo.toml). Platform-specific native code uses Swift (via `swift-rs` for StoreKit on Apple platforms) and Kotlin (via JNI for Google Play Billing on Android), as described in the design doc.
+    - 1.3: The JavaScript/TypeScript API surface is defined in [`guest-js/index.ts`](guest-js/index.ts) and [`guest-js/types.ts`](guest-js/types.ts), including:
       - Functions: `initialize`, `isAvailable`, `queryProductDetails`, `buyNonConsumable`, `buyConsumable`, `completePurchase`, `restorePurchases`, `countryCode`, `onPurchaseUpdate`.
       - Data models: `ProductDetails`, `PurchaseDetails`, `PurchaseParam`, `PurchaseStatus`, `PurchaseVerificationData`, `IAPError`, `ProductDetailsResponse`.
       - Event: `onPurchaseUpdate` (listens for purchase updates via Tauri events).
@@ -154,35 +74,41 @@ graph LR
 2.  **Project Setup:**
 
     - 2.1: The project was initialized using the Tauri CLI to scaffold a new plugin structure.
-    - 2.2: The Rust core crate is located at [`crates/tauri-plugin-iap`](crates/tauri-plugin-iap/), with its manifest in [`crates/tauri-plugin-iap/Cargo.toml`](crates/tauri-plugin-iap/Cargo.toml).
+    - 2.2: The Rust core crate is located at the root directory, with its manifest in [`Cargo.toml`](Cargo.toml).
     - 2.3: `Cargo.toml` manages Rust dependencies and platform-specific features. Native code integration (Swift/Kotlin) is handled via build scripts and platform modules as described in the design doc.
-    - 2.4: The JavaScript/TypeScript API is implemented in [`packages/tauri-plugin-iap/src`](packages/tauri-plugin-iap/src/), with configuration in [`packages/tauri-plugin-iap/package.json`](packages/tauri-plugin-iap/package.json) and [`packages/tauri-plugin-iap/tsconfig.json`](packages/tauri-plugin-iap/tsconfig.json).
+    - 2.4: The JavaScript/TypeScript API is implemented in [`guest-js`](guest-js/), with configuration in [`package.json`](package.json) and [`tsconfig.json`](tsconfig.json).
 
 3.  **Core Module Implementation:**
 
-    - 3.1: Implement the `models.rs` file, defining the Rust equivalents of the data structures described in the design document, using `serde` for serialization/deserialization.
-    - 3.2: Implement the `platform/mod.rs` file, defining the `Store` trait with the unified interface methods.
-    - 3.3: Implement the `plugin.rs` file, containing the `IapPlugin` struct and implementing the Tauri `Plugin` trait, delegating calls to the platform-specific `Store` implementation.
-    - 3.4: Implement the `lib.rs` file, the main entry point for the Tauri plugin, responsible for registering commands and setting up the plugin.
+    - 3.1: Implement core data structures in `src/models.rs` using `serde` for serialization.
+    - 3.2: Define the command interface in `src/commands.rs` for webview interactions.
+    - 3.3: Create error types and handling in `src/error.rs`.
+    - 3.4: Implement the plugin setup in `src/lib.rs` with command registration and re-exports.
 
 4.  **Platform Adaptation:**
 
-    - 4.1: Implement the macOS/iOS support using Rust with `swift-rs` for FFI. This involves writing a Swift class (`StoreKitManager.swift`) to wrap `StoreKit` APIs, generating safe Rust wrappers in `platform/macos.rs`, and configuring `build.rs` to compile the Swift code and link against the `StoreKit.framework`.
-    - 4.2: Implement the Android support using Rust with the `jni` crate for JNI. This involves developing a Kotlin class (`BillingManager.kt`) to wrap the Google Play Billing Library, handling JNI interactions in `platform/android.rs`, and updating `build.rs` and Cargo for Android compilation.
-    - 4.3: Implement the placeholder implementation for unsupported platforms (Windows/Linux) in `platform/desktop.rs`, returning "PlatformNotSupported" errors for all IAP-related calls.
+    - 4.1: Create the iOS implementation:
+      - Set up Swift package in `ios/` directory
+      - Implement StoreKit wrapper in Swift
+      - Create FFI bridge in `src/mobile.rs` for iOS
+    - 4.2: Create the Android implementation:
+      - Set up Android library in `android/` directory
+      - Implement Google Play Billing wrapper in Kotlin
+      - Create JNI bridge in `src/mobile.rs` for Android
+    - 4.3: Implement the desktop fallback in `src/desktop.rs`, returning appropriate errors for unsupported operations.
 
 5.  **Interface Design:**
 
-    - 5.1: Design the JavaScript/TypeScript API in `src-js` with promise-based and strongly typed functions, providing a consistent interface for developers.
-    - 5.2: Ensure the Rust `Store` trait defines a common contract for all platform implementations, ensuring a unified internal interface.
+    - 5.1: Design the JavaScript/TypeScript API in `guest-js` with promise-based functions.
+    - 5.2: Generate TypeScript types from Rust models.
+    - 5.3: Build and output transpiled JavaScript to `dist-js`.
 
 6.  **Data Flow Implementation:**
 
-    - 6.1: Implement the data flow from the frontend to Rust using Tauri's `invoke` system.
-    - 7.1: Define specific error types (e.g., `PlatformNotSupported`, `InitializationFailed`, `ProductNotFound`, `PurchaseCancelled`, `NetworkError`, `InvalidReceipt`).
-    - 7.2: Use Rust's `Result` type to propagate errors from native code through the Rust bridge to the `IapPlugin`.
-    - 7.3: Ensure errors returned from Rust `invoke` calls cause the corresponding JavaScript `Promise` to reject.
-    - 7.4: Implement event-based errors for asynchronous events like `onPurchaseUpdate`.
+    - 6.1: Set up command invocations from JavaScript to Rust.
+    - 6.2: Configure command permissions in the `permissions/` directory.
+    - 6.3: Implement error propagation through the invoke system.
+    - 6.4: Set up event emitters for asynchronous updates.
 
 7.  **Security Implementation:**
 

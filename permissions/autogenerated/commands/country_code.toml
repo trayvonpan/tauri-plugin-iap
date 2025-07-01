@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-country-code"
+description = "Enables the country_code command without any pre-configured scope."
+commands.allow = ["country_code"]
+
+[[permission]]
+identifier = "deny-country-code"
+description = "Denies the country_code command without any pre-configured scope."
+commands.deny = ["country_code"]

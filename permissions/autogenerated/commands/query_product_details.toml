@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-query-product-details"
+description = "Enables the query_product_details command without any pre-configured scope."
+commands.allow = ["query_product_details"]
+
+[[permission]]
+identifier = "deny-query-product-details"
+description = "Denies the query_product_details command without any pre-configured scope."
+commands.deny = ["query_product_details"]

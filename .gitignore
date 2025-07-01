@@ -47,3 +47,8 @@ Icon?
 
 # Logs
 logs/
+
+# Tauri plugin
+.tauri/
+dist-js/
+dist/

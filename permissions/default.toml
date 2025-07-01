@@ -1,0 +1,12 @@
+[default]
+description = "Default permissions for the plugin. Includes all in-app purchase operations."
+permissions = [
+    "allow-initialize",
+    "allow-is-available",
+    "allow-query-product-details",
+    "allow-buy-non-consumable",
+    "allow-buy-consumable",
+    "allow-complete-purchase",
+    "allow-restore-purchases",
+    "allow-country-code"
+]

@@ -1,7 +1,10 @@
+use jni::objects::{JClass, JObject, JString, JValue};
+use jni::JNIEnv;
 use serde::de::DeserializeOwned;
+use serde_json::json;
 use tauri::{
-  plugin::{PluginApi, PluginHandle},
-  AppHandle, Runtime,
+    plugin::{PluginApi, PluginHandle},
+    AppHandle, Runtime,
 };
 
 use crate::models::*;
@@ -11,14 +14,14 @@ tauri::ios_plugin_binding!(init_plugin_iap);
 
 // initializes the Kotlin or Swift plugin classes
 pub fn init<R: Runtime, C: DeserializeOwned>(
-  _app: &AppHandle<R>,
-  api: PluginApi<R, C>,
+    _app: &AppHandle<R>,
+    api: PluginApi<R, C>,
 ) -> crate::Result<Iap<R>> {
-  #[cfg(target_os = "android")]
-  let handle = api.register_android_plugin("com.plugin.iap", "IapPlugin")?;
-  #[cfg(target_os = "ios")]
-  let handle = api.register_ios_plugin(init_plugin_iap)?;
-  Ok(Iap(handle))
+    #[cfg(target_os = "android")]
+    let handle = api.register_android_plugin("com.plugin.iap", "IapPlugin")?;
+    #[cfg(target_os = "ios")]
+    let handle = api.register_ios_plugin(init_plugin_iap)?;
+    Ok(Iap(handle))
 }
 
 /// Access to the iap APIs.
@@ -52,9 +55,15 @@ impl<R: Runtime> Iap<R> {
     /// # Arguments
     ///
     /// * `product_ids` - List of product identifiers to query
-    pub fn query_product_details(&self, product_ids: Vec<String>) -> crate::Result<ProductDetailsResponse> {
+    pub fn query_product_details(
+        &self,
+        product_ids: Vec<String>,
+    ) -> crate::Result<ProductDetailsResponse> {
         self.0
-            .run_mobile_plugin("query_product_details", product_ids)
+            .run_mobile_plugin(
+                "query_product_details",
+                json!({ "productIds": product_ids }),
+            )
             .map_err(Into::into)
     }
 
@@ -75,15 +84,19 @@ impl<R: Runtime> Iap<R> {
     ///
     /// * `purchase_param` - Parameters for the purchase
     /// * `auto_consume` - Whether to automatically consume the purchase after successful transaction
-    pub fn buy_consumable(&self, purchase_param: PurchaseParam, auto_consume: bool) -> crate::Result<bool> {
-        #[derive(Serialize)]
-        struct Params {
-            purchase_param: PurchaseParam,
-            auto_consume: bool,
-        }
-
+    pub fn buy_consumable(
+        &self,
+        purchase_param: PurchaseParam,
+        auto_consume: bool,
+    ) -> crate::Result<bool> {
         self.0
-            .run_mobile_plugin("buy_consumable", Params { purchase_param, auto_consume })
+            .run_mobile_plugin(
+                "buy_consumable",
+                json!({
+                    "purchaseParam": purchase_param,
+                    "autoConsume": auto_consume
+                }),
+            )
             .map_err(Into::into)
     }
 
@@ -105,7 +118,10 @@ impl<R: Runtime> Iap<R> {
     /// * `application_user_name` - Optional user identifier for the restoration
     pub fn restore_purchases(&self, application_user_name: Option<String>) -> crate::Result<()> {
         self.0
-            .run_mobile_plugin("restore_purchases", application_user_name)
+            .run_mobile_plugin(
+                "restore_purchases",
+                json!({ "applicationUserName": application_user_name }),
+            )
             .map_err(Into::into)
     }
 
@@ -114,5 +130,45 @@ impl<R: Runtime> Iap<R> {
         self.0
             .run_mobile_plugin("country_code", ())
             .map_err(Into::into)
+    }
+}
+
+#[cfg(target_os = "android")]
+#[allow(non_snake_case)]
+pub mod android {
+    use super::*;
+    use jni::sys::jobject;
+
+    #[no_mangle]
+    pub extern "system" fn Java_com_plugin_iap_IapPlugin_onPurchaseUpdate(
+        env: JNIEnv,
+        _class: JClass,
+        purchases_json: JString,
+    ) {
+        let purchases_str: String = env
+            .get_string(purchases_json)
+            .expect("Couldn't get java string!")
+            .into();
+
+        let purchases: Vec<PurchaseDetails> =
+            serde_json::from_str(&purchases_str).expect("Failed to parse purchase details");
+
+        // Here we would emit the purchase update event to the Tauri event system
+        // This needs to be implemented based on how Tauri handles plugin events
+    }
+
+    #[no_mangle]
+    pub extern "system" fn Java_com_plugin_iap_IapPlugin_handleError(
+        env: JNIEnv,
+        _class: JClass,
+        error_json: JString,
+    ) {
+        let error_str: String = env
+            .get_string(error_json)
+            .expect("Couldn't get java string!")
+            .into();
+
+        // Here we would handle the error, possibly by emitting an error event
+        // This needs to be implemented based on how Tauri handles plugin errors
     }
 }

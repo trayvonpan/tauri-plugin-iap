@@ -1,18 +1,24 @@
 [package]
-name = "tauri-plugin-iap"
-version = "0.1.0"
 authors = ["You"]
 description = ""
 edition = "2021"
-rust-version = "1.77.2"
 exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
 links = "tauri-plugin-iap"
+name = "tauri-plugin-iap"
+rust-version = "1.77.2"
+version = "0.1.0"
 
 [dependencies]
-tauri = { version = "2.6.2" }
-serde = "1.0"
+log = "0.4"
+serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
+tauri = {version = "2.6.2"}
 thiserror = "2"
 
+# Android-specific dependencies
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.13"
+jni = "0.21"
+
 [build-dependencies]
-tauri-plugin = { version = "2.3.0", features = ["build"] }
+tauri-plugin = {version = "2.3.0", features = ["build"]}
